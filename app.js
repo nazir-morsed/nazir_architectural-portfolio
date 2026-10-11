@@ -16,13 +16,14 @@
   // 1. STORAGE KEYS & CONSTANTS
   // ----------------------------------------------------------------------------
   const STORAGE_KEY = 'nazir_morsed_projects_v3';
-  const AUTH_KEY = 'nazir_morsed_auth_v2';
-  const PASSWORD_KEY = 'nazir_morsed_password_v2';
+  const SESSION_AUTH_KEY = 'nazir_morsed_admin_session';
+  const PASSWORD_KEY = 'nazir_morsed_password_v3';
   const THEME_KEY = 'nazir_morsed_theme_v2';
   const INBOX_KEY = 'nazir_morsed_inquiries_v2';
   
   const ADMIN_EMAIL = 'nazirmorsed722@gmail.com';
-  const DEFAULT_PASSWORD = 'architect2026';
+  const ADMIN_USERNAME = 'nazir_morsed';
+  const DEFAULT_PASSWORD = 'Na111222';
 
   // ----------------------------------------------------------------------------
   // INDEXEDDB VIDEO STORAGE SYSTEM (HIGH-CAPACITY LOCAL VIDEO BLOB PERSISTENCE)
@@ -497,8 +498,14 @@ Features traditional mortise-and-tenon joinery details, hand-selected timber, an
   // 7. AUTHENTICATION & SECURITY
   // ----------------------------------------------------------------------------
   function loadAuth() {
-    const authStatus = localStorage.getItem(AUTH_KEY);
-    isAuthenticated = authStatus === 'true';
+    // Clear legacy persistent localStorage auth tokens to enforce session-only access
+    try {
+      localStorage.removeItem('nazir_morsed_auth_v2');
+      localStorage.removeItem('nazir_morsed_auth');
+    } catch (e) {}
+
+    const sessionAuth = sessionStorage.getItem(SESSION_AUTH_KEY);
+    isAuthenticated = sessionAuth === 'active';
     updateAuthUI();
   }
 
@@ -510,13 +517,24 @@ Features traditional mortise-and-tenon joinery details, hand-selected timber, an
     localStorage.setItem(PASSWORD_KEY, newPwd);
   }
 
-  function login(password) {
+  function login(usernameOrEmail, password) {
     const master = getMasterPassword();
-    if (password === master) {
+    const cleanUser = (usernameOrEmail || '').trim().toLowerCase();
+    const cleanPass = (password || '').trim();
+
+    // Strict validation: username must be non-empty and match secret admin credentials
+    const isValidUser = Boolean(cleanUser) && (
+      cleanUser === ADMIN_USERNAME.toLowerCase() || 
+      cleanUser === ADMIN_EMAIL.toLowerCase()
+    );
+
+    const isPasswordValid = Boolean(cleanPass) && cleanPass === master;
+
+    if (isValidUser && isPasswordValid) {
       isAuthenticated = true;
-      localStorage.setItem(AUTH_KEY, 'true');
+      sessionStorage.setItem(SESSION_AUTH_KEY, 'active');
       updateAuthUI();
-      showToast(`Welcome, Architect MD. Nazir Morsed (${ADMIN_EMAIL})`, 'success');
+      showToast('Admin session unlocked. Welcome, MD. Nazir Morsed.', 'success');
       return true;
     } else {
       return false;
@@ -525,9 +543,13 @@ Features traditional mortise-and-tenon joinery details, hand-selected timber, an
 
   function logout() {
     isAuthenticated = false;
-    localStorage.setItem(AUTH_KEY, 'false');
+    sessionStorage.removeItem(SESSION_AUTH_KEY);
+    try {
+      localStorage.removeItem('nazir_morsed_auth_v2');
+      localStorage.removeItem('nazir_morsed_auth');
+    } catch (e) {}
     updateAuthUI();
-    showToast('Signed out of Administrative CMS.');
+    showToast('Signed out of Administrative CMS. Session terminated.');
   }
 
   function updateAuthUI() {
@@ -1611,10 +1633,10 @@ Features traditional mortise-and-tenon joinery details, hand-selected timber, an
 
     // Admin Login Form
     const loginForm = document.getElementById('admin-login-form');
+    const usernameInput = document.getElementById('admin-username-input');
     const passwordInput = document.getElementById('admin-password');
     const authErrorMsg = document.getElementById('auth-error-msg');
     const togglePwdBtn = document.getElementById('toggle-pwd-visibility');
-    const fillDemoBtn = document.getElementById('fill-demo-password-btn');
 
     if (togglePwdBtn && passwordInput) {
       togglePwdBtn.addEventListener('click', () => {
@@ -1623,22 +1645,25 @@ Features traditional mortise-and-tenon joinery details, hand-selected timber, an
       });
     }
 
-    if (fillDemoBtn && passwordInput) {
-      fillDemoBtn.addEventListener('click', () => {
-        passwordInput.value = DEFAULT_PASSWORD;
-        if (authErrorMsg) authErrorMsg.textContent = '';
-      });
-    }
-
     if (loginForm && passwordInput) {
       loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const entered = passwordInput.value;
-        if (login(entered)) {
+        const enteredUser = usernameInput ? usernameInput.value.trim() : '';
+        const enteredPass = passwordInput.value;
+
+        if (!enteredUser || !enteredPass) {
+          if (authErrorMsg) authErrorMsg.textContent = 'Please provide both username and password.';
+          return;
+        }
+
+        if (login(enteredUser, enteredPass)) {
           if (authErrorMsg) authErrorMsg.textContent = '';
+          if (usernameInput) usernameInput.value = '';
           passwordInput.value = '';
         } else {
-          if (authErrorMsg) authErrorMsg.textContent = `Access denied. Contact: ${ADMIN_EMAIL}. Master key: architect2026`;
+          if (authErrorMsg) authErrorMsg.textContent = 'Access denied. Invalid administrative credentials.';
+          passwordInput.value = '';
+          passwordInput.focus();
         }
       });
     }

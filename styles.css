@@ -851,16 +851,34 @@ body.theme-light .hero-overlay {
   align-items: start;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1023px) {
   .about-grid {
     grid-template-columns: 1fr;
     gap: 3rem;
   }
 }
 
+/* Base / Mobile & Tablet Flow: Strictly non-sticky normal flow */
 .about-portrait-card {
-  position: sticky;
-  top: 100px;
+  position: relative;
+  top: auto;
+}
+
+/* Desktop Only: Sticky portrait sidebar (screens 1024px and wider) */
+@media (min-width: 1024px) {
+  .about-portrait-card {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 100px;
+  }
+}
+
+/* Mobile & Tablet explicitly non-sticky: Natural scrolling without freezing or overlap */
+@media (max-width: 1023px) {
+  .about-portrait-card {
+    position: relative !important;
+    top: auto !important;
+  }
 }
 
 .portrait-img-wrap {
@@ -2735,26 +2753,6 @@ body.theme-dark .filter-tab .tab-count {
   color: var(--text-muted);
 }
 
-.demo-auth-hint {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  background: var(--bg-card-hover);
-  padding: 0.6rem 0.85rem;
-  border-radius: var(--radius-xs);
-  border: 1px dashed var(--border-dashed);
-}
-
-.hint-badge {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--accent);
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-}
 
 .auth-submit-btn {
   width: 100%;
