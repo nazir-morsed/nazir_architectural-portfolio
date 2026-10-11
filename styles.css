@@ -862,6 +862,7 @@ body.theme-light .hero-overlay {
 .about-portrait-card {
   position: relative;
   top: auto;
+  z-index: 1;
 }
 
 /* Desktop Only: Sticky portrait sidebar (screens 1024px and wider) */
@@ -870,14 +871,29 @@ body.theme-light .hero-overlay {
     position: -webkit-sticky;
     position: sticky;
     top: 100px;
+    z-index: 10;
   }
 }
 
-/* Mobile & Tablet explicitly non-sticky: Natural scrolling without freezing or overlap */
+/* Mobile & Tablet explicitly non-sticky: Natural scrolling without freezing or overlap (screens under 1024px) */
 @media (max-width: 1023px) {
   .about-portrait-card {
     position: relative !important;
     top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    z-index: 1 !important;
+    float: none !important;
+    transform: none !important;
+  }
+
+  .portrait-img-wrap {
+    position: relative !important;
+    top: auto !important;
+    z-index: 1 !important;
+    max-width: 100%;
+    margin: 0 auto;
   }
 }
 
